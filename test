@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>스마트폰 사용시간과 수면시간의 상관관계 분석</title>
+</head>
+<body>
+  <svg width="900" height="520" style="font-family: sans-serif;">
+    <!-- 타이틀 배경 + 텍스트 -->
+    <rect x="0" y="0" width="640" height="30" fill="#147d92" rx="10" />
+    <text x="160" y="20" fill="white" font-size="18">스마트폰 이용시간과 수면시간의 상관관계 분석</text>
+
+    <!-- Y축 라벨 -->
+    <text x="20" y="250" fill="blue" font-size="16" transform="rotate(-90,20,250)">스마트폰 사용시간</text>
+
+    <!-- Y축 선 + 눈금 -->
+    <line x1="60" y1="40" x2="60" y2="440" stroke="gray" />
+    <g fill="black" font-size="14">
+      <text x="40" y="440">0</text>
+      <text x="40" y="400">1</text>
+      <text x="40" y="350">2</text>
+      <text x="40" y="300">3</text>
+      <text x="40" y="250">4</text>
+      <text x="40" y="200">5</text>
+      <text x="40" y="150">6</text>
+      <text x="40" y="100">7</text>
+      <text x="40" y="50">8</text>
+    </g>
+
+    <!-- Y축 가로선 -->
+    <g stroke="#ccc">
+      <line x1="60" y1="440" x2="640" y2="440" />
+    </g>
+
+    <!-- X축 라벨 -->
+    <text x="400" y="480" fill="blue" font-size="16">수면시간</text>
+
+    <!-- X축 눈금 + 구분선 -->
+    <g fill="black" font-size="14">
+      <text x="100" y="460">4시간</text>
+      <line x1="100" y1="40" x2="100" y2="440" stroke="#ddd" />
+      <text x="180" y="460">4시간 30분</text>
+      <line x1="180" y1="40" x2="180" y2="440" stroke="#ddd" />
+      <text x="260" y="460">5시간</text>
+      <line x1="260" y1="40" x2="260" y2="440" stroke="#ddd" />
+      <text x="340" y="460">6시간</text>
+      <line x1="340" y1="40" x2="340" y2="440" stroke="#ddd" />
+      <text x="420" y="460">7시간</text>
+      <line x1="420" y1="40" x2="420" y2="440" stroke="#ddd" />
+      <text x="500" y="460">7시간 30분</text>
+      <line x1="500" y1="40" x2="500" y2="440" stroke="#ddd" />
+      <text x="580" y="460">8시간</text>
+      <line x1="580" y1="40" x2="580" y2="440" stroke="#ddd" />
+      <line x1="640" y1="40" x2="640" y2="440" stroke="#ddd" />
+
+    </g>
+
+    <!-- 데이터 점 -->
+    <g fill="coral">
+      <circle cx="100" cy="40" r="10" />
+      <circle cx="180" cy="190" r="10" />
+      <circle cx="180" cy="90" r="10" />
+      <circle cx="260" cy="240" r="10" />
+      <circle cx="260" cy="190" r="10" />
+      <circle cx="340" cy="240" r="10" />
+      <circle cx="420" cy="290" r="10" />
+      <circle cx="500" cy="290" r="10" />
+      <circle cx="580" cy="390" r="10" />
+      <circle cx="580" cy="340" r="10" />
+    </g>
+
+    <!-- 오른쪽 아이콘 바 (청록색, 둥근 모서리) -->
+    <rect x="640" y="0" width="60" height="300" fill="#147d92" rx="8" />
+    <g fill="white" font-size="20">
+      <text x="660" y="30">↕</text>
+      <text x="660" y="80">👁</text>
+      <text x="660" y="130">📏</text>
+      <text x="660" y="180">📊</text>
+      <text x="660" y="230">🖌</text>
+      <text x="660" y="280">📷</text>
+    </g>
+
+    <!-- 환경설정 말풍선 → 사각형으로 변경 + 이어지는 꼬리 -->
+    <rect x="710" y="40" width="180" height="170" fill="#f0f0f0" stroke="#ccc" rx="6" />
+    <polygon points="710,165 710,185 695,175" fill="#f0f0f0" stroke="#ccc" />
+
+    <text x="730" y="65" font-weight="bold">환경설정</text>
+    <circle cx="730" cy="90" r="6" fill="blue" />
+    <text x="745" y="94" font-size="14">점</text>
+    <circle cx="730" cy="120" r="6" fill="white" stroke="black" />
+    <text x="735" y="124" font-size="14">히스토그램으로 변환</text>
+    <circle cx="720" cy="150" r="6" fill="white" stroke="black" />
+    <text x="735" y="154" font-size="14">각 점에 대한 막대</text>
+
+  </svg>
+</body>
+</html>
