@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>정보보안 공격 vs 방어 게임</title>
+  <style>
+    :root {
+      --bg1: #07111f;
+      --bg2: #0c1f34;
+      --panel: rgba(8, 23, 40, 0.86);
+      --line: rgba(115, 230, 255, 0.28);
+      --neon: #54f1ff;
+      --neon2: #73ffb2;
+      --warn: #ffcc59;
+      --danger: #ff6b81;
+      --text: #eaf8ff;
+      --muted: #9ec5d8;
+      --good: #72ffb0;
+      --bad: #ff8da1;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: "Pretendard", "Malgun Gothic", sans-serif; color: var(--text); }
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(84,241,255,0.12), transparent 25%),
+        radial-gradient(circle at 80% 10%, rgba(115,255,178,0.08), transparent 18%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      overflow-x: hidden;
+    }
+
+    .matrix {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.12;
+      background-image:
+        linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.35));
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 28px 28px 20px;
+      background: linear-gradient(180deg, rgba(8,23,40,0.94), rgba(8,23,40,0.82));
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(84,241,255,0.12), transparent 30%);
+      pointer-events: none;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 10px;
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 700px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .badge {
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .characters {
+      position: relative;
+      min-height: 120px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .character {
+      position: absolute;
+      bottom: 0;
+      width: 88px;
+      height: 88px;
+      animation: float 2.8s ease-in-out infinite;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
+    }
+
+    .guardian {
+      right: 84px;
+      animation-delay: -0.7s;
+    }
+
+    .hacker {
+      right: 0;
+      animation-delay: -1.4s;
+    }
+
+    .ground {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 4px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(84,241,255,0.45), transparent);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes blink {
+      0%, 45%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.1); }
+    }
+
+    @keyframes runSide {
+      0% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+      100% { transform: translateX(-8px); }
+    }
+
+    .eye {
+      animation: blink 4s infinite;
+      transform-origin: center;
+    }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1.45fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .setup {
+      padding: 22px;
+      align-self: start;
+      position: sticky;
+      top: 18px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 24px;
+    }
+
+    .small-title {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(115, 230, 255, 0.24);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px 14px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--neon);
+      box-shadow: 0 0 0 3px rgba(84,241,255,0.14);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .primary {
+      color: #03131c;
+      background: linear-gradient(135deg, var(--neon), #9ef8ff);
+      box-shadow: 0 8px 20px rgba(84,241,255,0.22);
+    }
+
+    .secondary {
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--line);
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+
+    .game-area {
+      padding: 22px;
+      min-height: 660px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .hud-box {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(115, 230, 255, 0.18);
+    }
+
+    .hud-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .hud-value {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+
+    .screen.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .question-card {
+      border: 1px solid rgba(115,230,255,0.2);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(115,230,255,0.22);
+      color: var(--neon);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      background: rgba(84,241,255,0.07);
+    }
+
+    .question-text {
+      white-space: pre-line;
+      line-height: 1.75;
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .choice-group {
+      margin-bottom: 18px;
+    }
+
+    .choice-title {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .option {
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(115,230,255,0.18);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      font-weight: 600;
+      min-height: 58px;
+    }
+
+    .option.selected {
+      outline: 2px solid rgba(84,241,255,0.75);
+      background: rgba(84,241,255,0.12);
+    }
+
+    .option.correct {
+      outline: 2px solid rgba(114,255,176,0.85);
+      background: rgba(114,255,176,0.12);
+    }
+
+    .option.wrong {
+      outline: 2px solid rgba(255,141,161,0.85);
+      background: rgba(255,141,161,0.1);
+    }
+
+    .feedback {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      line-height: 1.6;
+      display: none;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .feedback.show { display: block; }
+    .feedback.good { background: rgba(114,255,176,0.12); color: var(--good); }
+    .feedback.bad { background: rgba(255,141,161,0.12); color: var(--bad); }
+
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--neon), var(--neon2));
+      transition: width 0.3s ease;
+    }
+
+    .result-card {
+      text-align: center;
+      padding: 26px 18px 8px;
+    }
+
+    .score-ring {
+      width: 180px;
+      height: 180px;
+      margin: 18px auto;
+      border-radius: 50%;
+      background: conic-gradient(var(--neon) 0deg, rgba(255,255,255,0.08) 0deg);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 0 10px rgba(84,241,255,0.06);
+    }
+
+    .score-ring::before {
+      content: "";
+      width: 138px;
+      height: 138px;
+      border-radius: 50%;
+      background: #07131f;
+      border: 1px solid rgba(115,230,255,0.16);
+      position: absolute;
+    }
+
+    .score-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .score-main {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .score-sub {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .result-box {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(115,230,255,0.16);
+    }
+
+    .ranking {
+      margin-top: 16px;
+      text-align: left;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(115,230,255,0.14);
+    }
+
+    .ranking h3 { margin: 0 0 12px; }
+
+    .ranking-item {
+      display: grid;
+      grid-template-columns: 38px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .ranking-item:first-child { border-top: 0; }
+
+    .rank-badge {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(84,241,255,0.12);
+      color: var(--neon);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .mini {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 960px) {
+      .panel-grid { grid-template-columns: 1fr; }
+      .setup { position: static; }
+      .hud, .result-grid { grid-template-columns: repeat(2, 1fr); }
+      .options { grid-template-columns: 1fr; }
+      .characters { width: 100%; min-height: 100px; }
+    }
+
+    @media (max-width: 560px) {
+      .container { padding: 14px; }
+      .hero, .setup, .game-area { padding: 16px; }
+      .hud, .result-grid { grid-template-columns: 1fr; }
+      .question-text { font-size: 16px; }
+      .score-ring { width: 150px; height: 150px; }
+      .score-ring::before { width: 116px; height: 116px; }
+      .score-main { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="matrix"></div>
+  <div class="container">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>정보보안 공격 vs 방어 게임</h1>
+          <p class="subtitle">
+            제한 시간 안에 상황을 읽고 <strong>공격 유형</strong>과 <strong>방어 방법</strong>을 빠르게 맞혀 보세요.
+            개인별 점수와 정답 개수, 소요 기록이 마지막에 표시됩니다.
+          </p>
+          <div class="badge-row">
+            <div class="badge">고1 정보 수업용</div>
+            <div class="badge">개인별 플레이</div>
+            <div class="badge">타이머 기반 점수</div>
+          </div>
+        </div>
+        <div class="characters" aria-hidden="true">
+          <div class="ground"></div>
+          <svg class="character guardian" viewBox="0 0 120 120">
+            <g style="animation:runSide 2.2s ease-in-out infinite; transform-origin:center;">
+              <circle cx="60" cy="30" r="18" fill="#73ffb2" opacity="0.18"></circle>
+              <path d="M60 16c-16 0-28 10-28 22v14c0 15 12 28 28 34 16-6 28-19 28-34V38c0-12-12-22-28-22Z" fill="#73ffb2"></path>
+              <path d="M60 26c-8 0-14 5-14 12v11c0 9 6 17 14 21 8-4 14-12 14-21V38c0-7-6-12-14-12Z" fill="#08233a"></path>
+              <circle cx="54" cy="44" r="2.8" fill="#73ffb2" class="eye"></circle>
+              <circle cx="66" cy="44" r="2.8" fill="#73ffb2" class="eye"></circle>
+              <path d="M54 54c4 3 8 3 12 0" stroke="#73ffb2" stroke-width="3" stroke-linecap="round" fill="none"></path>
+              <rect x="48" y="76" width="24" height="18" rx="8" fill="#73ffb2"></rect>
+              <circle cx="60" cy="85" r="4" fill="#08233a"></circle>
+            </g>
+          </svg>
+          <svg class="character hacker" viewBox="0 0 120 120">
+            <g style="animation:runSide 2.6s ease-in-out infinite; transform-origin:center;">
+              <circle cx="60" cy="32" r="18" fill="#54f1ff" opacity="0.16"></circle>
+              <path d="M27 43c3-18 18-26 33-26 16 0 30 8 33 26-8-4-18-7-33-7s-25 3-33 7Z" fill="#54f1ff"></path>
+              <rect x="35" y="42" width="50" height="24" rx="12" fill="#0c1f34" stroke="#54f1ff" stroke-width="3"></rect>
+              <circle cx="50" cy="54" r="3" fill="#54f1ff" class="eye"></circle>
+              <circle cx="70" cy="54" r="3" fill="#54f1ff" class="eye"></circle>
+              <path d="M48 66c8 5 16 5 24 0" stroke="#54f1ff" stroke-width="3" stroke-linecap="round" fill="none"></path>
+              <path d="M30 70h60l-10 22H40L30 70Z" fill="#54f1ff"></path>
+              <rect x="45" y="78" width="30" height="6" rx="3" fill="#0c1f34"></rect>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <div class="panel-grid">
+      <aside class="card setup">
+        <h2>게임 설정</h2>
+        <div class="field">
+          <label class="small-title" for="playerName">이름</label>
+          <input id="playerName" type="text" placeholder="예: 10300 홍길동" maxlength="20" />
+        </div>
+        <div class="field">
+          <label class="small-title" for="difficulty">난이도</label>
+          <select id="difficulty">
+            <option value="easy">쉬움 · 60초 · 문제 8개</option>
+            <option value="normal" selected>보통 · 75초 · 문제 10개</option>
+            <option value="hard">어려움 · 90초 · 문제 12개</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="small-title" for="soundToggle">사운드</label>
+          <select id="soundToggle">
+            <option value="on" selected>켜기</option>
+            <option value="off">끄기</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="primary" id="startBtn">게임 시작</button>
+          <button class="secondary" id="resetRankBtn">랭킹 초기화</button>
+        </div>
+        <div class="note">
+          각 문제는 <strong>공격 카드 1개</strong>와 <strong>방어 카드 1개</strong>를 모두 선택해야 제출됩니다.
+          정답을 빠르게 맞힐수록 점수가 높아집니다.
+        </div>
+      </aside>
+
+      <main class="card game-area">
+        <div class="hud">
+          <div class="hud-box"><div class="hud-label">남은 시간</div><div class="hud-value" id="timeText">--</div></div>
+          <div class="hud-box"><div class="hud-label">현재 점수</div><div class="hud-value" id="scoreText">0</div></div>
+          <div class="hud-box"><div class="hud-label">진행</div><div class="hud-value" id="progressText">0 / 0</div></div>
+          <div class="hud-box"><div class="hud-label">연속 정답</div><div class="hud-value" id="streakText">0</div></div>
+        </div>
+
+        <div class="screen active" id="welcomeScreen">
+          <div class="question-card">
+            <div class="tag">🛡️ 플레이 방법</div>
+            <p class="question-text">1. 상황을 읽는다.
+2. 공격 유형을 하나 고른다.
+3. 가장 적절한 방어 방법을 하나 고른다.
+4. 제출 후 바로 피드백을 확인한다.
+5. 제한 시간 안에 최대한 많은 점수를 얻는다.</p>
+          </div>
+          <div class="ranking" id="previewRanking">
+            <h3>최근 랭킹</h3>
+            <div id="previewRankingList" class="mini">아직 기록이 없습니다.</div>
+          </div>
+        </div>
+
+        <div class="screen" id="gameScreen">
+          <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+          <div class="question-card">
+            <div class="tag" id="questionTag">문제</div>
+            <p class="question-text" id="questionText"></p>
+          </div>
+
+          <div class="choice-group">
+            <h3 class="choice-title">① 공격 유형 선택</h3>
+            <div class="options" id="attackOptions"></div>
+          </div>
+
+          <div class="choice-group">
+            <h3 class="choice-title">② 방어 방법 선택</h3>
+            <div class="options" id="defenseOptions"></div>
+          </div>
+
+          <div class="btn-row">
+            <button class="primary" id="submitBtn">정답 제출</button>
+            <button class="secondary" id="skipBtn">건너뛰기</button>
+          </div>
+
+          <div class="feedback" id="feedbackBox"></div>
+        </div>
+
+        <div class="screen" id="resultScreen">
+          <div class="result-card">
+            <div class="tag">🏁 최종 결과</div>
+            <h2 id="resultTitle">게임 종료</h2>
+            <div class="score-ring" id="scoreRing">
+              <div class="score-inner">
+                <div class="score-main" id="finalScore">0</div>
+                <div class="score-sub">최종 점수</div>
+              </div>
+            </div>
+            <div class="result-grid">
+              <div class="result-box"><div class="hud-label">정답 수</div><div class="hud-value" id="finalCorrect">0</div></div>
+              <div class="result-box"><div class="hud-label">해결 문제</div><div class="hud-value" id="finalSolved">0</div></div>
+              <div class="result-box"><div class="hud-label">정확도</div><div class="hud-value" id="finalAccuracy">0%</div></div>
+              <div class="result-box"><div class="hud-label">최고 연속</div><div class="hud-value" id="finalStreak">0</div></div>
+            </div>
+            <div class="ranking">
+              <h3>기록 랭킹</h3>
+              <div id="rankingList"></div>
+            </div>
+            <div class="btn-row" style="justify-content:center; margin-top:18px;">
+              <button class="primary" id="restartBtn">다시 도전</button>
+            </div>
+            <div class="footer-note">교실에서 개인별로 플레이한 뒤 점수를 비교하거나, 수행 결과 확인용으로 활용할 수 있습니다.</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const ATTACK_OPTIONS = [
+      "피싱",
+      "스미싱",
+      "해킹",
+      "악성코드",
+      "비밀번호 추측",
+      "계정 탈취",
+      "DDoS 공격",
+      "가짜 사이트 공격"
+    ];
+
+    const DEFENSE_OPTIONS = [
+      "방화벽",
+      "사용자 인증",
+      "2단계 인증",
+      "백신 프로그램",
+      "비밀번호 강화",
+      "의심 링크 클릭 금지",
+      "보안 업데이트",
+      "IDS/IPS",
+      "보안 교육",
+      "권한 설정 확인"
+    ];
+
+    const QUESTION_BANK = [
+      {
+        title: "문제 1",
+        text: "회사 직원에게 다음 이메일이 도착했습니다.\n\n\"계정이 해킹되었습니다. 아래 링크에서 로그인하세요.\"",
+        attack: "피싱",
+        defense: "2단계 인증",
+        explanation: "이메일로 가짜 로그인 페이지에 접속하도록 유도하는 전형적인 피싱입니다. 계정 보호를 위해 2단계 인증을 설정하면 피해를 줄일 수 있습니다."
+      },
+      {
+        title: "문제 2",
+        text: "문자로 다음 메시지가 왔습니다.\n\n[택배] 주소 오류로 배송이 보류되었습니다. 아래 링크를 클릭해주세요.",
+        attack: "스미싱",
+        defense: "의심 링크 클릭 금지",
+        explanation: "문자 메시지 링크를 통해 악성 앱 설치나 정보 입력을 유도하는 스미싱입니다. 링크를 누르지 않는 것이 가장 중요합니다."
+      },
+      {
+        title: "문제 3",
+        text: "학교 서버에 외부에서 수백 번의 접속 시도가 계속 발생하고 있습니다.",
+        attack: "해킹",
+        defense: "방화벽",
+        explanation: "외부 침입을 차단하는 대표적인 기술은 방화벽입니다. 허용되지 않은 접근을 제한해 줍니다."
+      },
+      {
+        title: "문제 4",
+        text: "컴퓨터에서 알 수 없는 프로그램이 설치되었고 파일이 실행되지 않습니다.",
+        attack: "악성코드",
+        defense: "백신 프로그램",
+        explanation: "악성코드 감염 상황으로 볼 수 있습니다. 백신 프로그램으로 탐지·차단·치료해야 합니다."
+      },
+      {
+        title: "문제 5",
+        text: "SNS에서 친구가 보낸 링크를 눌렀더니 개인 정보 입력 창이 나타났습니다.",
+        attack: "피싱",
+        defense: "보안 교육",
+        explanation: "지인을 사칭한 링크를 보내는 피싱 사례입니다. 의심 링크를 구별하는 보안 교육이 중요합니다."
+      },
+      {
+        title: "문제 6",
+        text: "게임 사이트 로그인 시 아이디와 비밀번호가 계속 틀렸다고 나오며, 누군가 여러 번 시도한 흔적이 보입니다.",
+        attack: "비밀번호 추측",
+        defense: "비밀번호 강화",
+        explanation: "단순한 비밀번호는 추측 공격에 취약합니다. 길고 복잡한 비밀번호를 사용해야 합니다."
+      },
+      {
+        title: "문제 7",
+        text: "인터넷 쇼핑몰 사이트가 갑자기 매우 느려지더니 접속이 되지 않습니다.",
+        attack: "DDoS 공격",
+        defense: "IDS/IPS",
+        explanation: "대량의 트래픽을 보내 서비스를 마비시키는 DDoS 공격입니다. IDS/IPS로 이상 트래픽을 탐지·차단할 수 있습니다."
+      },
+      {
+        title: "문제 8",
+        text: "무료 프로그램을 설치한 뒤 광고 창이 계속 뜨고 브라우저 시작 화면이 바뀌었습니다.",
+        attack: "악성코드",
+        defense: "보안 업데이트",
+        explanation: "광고 프로그램이나 악성 프로그램 설치 사례입니다. 운영체제와 소프트웨어를 최신 상태로 유지하면 보안 취약점을 줄일 수 있습니다."
+      },
+      {
+        title: "문제 9",
+        text: "은행에서 보낸 것처럼 보이는 이메일이 왔고, 계좌 정보를 다시 입력하라고 합니다.",
+        attack: "피싱",
+        defense: "사용자 인증",
+        explanation: "금융기관을 사칭한 피싱입니다. 본인 확인 절차와 공식 앱/사이트 인증을 통해 진위를 확인해야 합니다."
+      },
+      {
+        title: "문제 10",
+        text: "SNS 계정이 해킹되어 친구들에게 이상한 메시지가 자동으로 전송되었습니다.",
+        attack: "계정 탈취",
+        defense: "2단계 인증",
+        explanation: "계정 정보가 유출되어 계정이 탈취된 상황입니다. 2단계 인증은 계정 보호에 매우 효과적입니다."
+      },
+      {
+        title: "문제 11",
+        text: "학교 와이파이에 접속했더니 진짜처럼 보이는 로그인 창이 뜨고 개인 정보 입력을 요구합니다.",
+        attack: "가짜 사이트 공격",
+        defense: "의심 링크 클릭 금지",
+        explanation: "가짜 로그인 페이지로 유도하는 상황입니다. 접속 주소와 안내 경로를 반드시 확인해야 합니다."
+      },
+      {
+        title: "문제 12",
+        text: "모르는 번호로 \"모바일 상품권 당첨!\" 문자가 왔고 설치 링크가 함께 포함되어 있습니다.",
+        attack: "스미싱",
+        defense: "의심 링크 클릭 금지",
+        explanation: "당첨, 쿠폰, 배송, 환급 등을 미끼로 링크 클릭을 유도하는 전형적인 스미싱입니다."
+      },
+      {
+        title: "문제 13",
+        text: "회사 서버에 저장된 중요한 데이터가 갑자기 사라졌습니다. 외부 침입 흔적도 확인되었습니다.",
+        attack: "해킹",
+        defense: "IDS/IPS",
+        explanation: "침입 탐지/방지 시스템은 수상한 접근과 이상 행위를 탐지하고 막는 데 도움을 줍니다."
+      },
+      {
+        title: "문제 14",
+        text: "웹사이트에 접속했더니 기존과 비슷하지만 주소가 조금 다른 로그인 화면이 나타났습니다.",
+        attack: "가짜 사이트 공격",
+        defense: "사용자 인증",
+        explanation: "주소가 유사한 가짜 사이트는 계정 정보를 탈취하려는 목적이 많습니다. 공식 인증 경로를 사용해야 합니다."
+      },
+      {
+        title: "문제 15",
+        text: "컴퓨터가 갑자기 느려지고 팝업 광고가 계속 뜨며, 내가 설치하지 않은 확장 프로그램이 보입니다.",
+        attack: "악성코드",
+        defense: "백신 프로그램",
+        explanation: "악성 광고 프로그램 또는 악성코드 감염 가능성이 높습니다. 백신 검사와 치료가 필요합니다."
+      }
+    ];
+
+    const difficultyConfig = {
+      easy: { time: 60, count: 8 },
+      normal: { time: 75, count: 10 },
+      hard: { time: 90, count: 12 }
+    };
+
+    const state = {
+      playerName: "",
+      difficulty: "normal",
+      sound: true,
+      timeLeft: 0,
+      score: 0,
+      questionIndex: 0,
+      correctCount: 0,
+      solvedCount: 0,
+      streak: 0,
+      bestStreak: 0,
+      questions: [],
+      selectedAttack: null,
+      selectedDefense: null,
+      timerId: null,
+      locked: false,
+      startedAt: null
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    const els = {
+      playerName: $("playerName"),
+      difficulty: $("difficulty"),
+      soundToggle: $("soundToggle"),
+      startBtn: $("startBtn"),
+      resetRankBtn: $("resetRankBtn"),
+      timeText: $("timeText"),
+      scoreText: $("scoreText"),
+      progressText: $("progressText"),
+      streakText: $("streakText"),
+      welcomeScreen: $("welcomeScreen"),
+      gameScreen: $("gameScreen"),
+      resultScreen: $("resultScreen"),
+      questionTag: $("questionTag"),
+      questionText: $("questionText"),
+      attackOptions: $("attackOptions"),
+      defenseOptions: $("defenseOptions"),
+      submitBtn: $("submitBtn"),
+      skipBtn: $("skipBtn"),
+      feedbackBox: $("feedbackBox"),
+      progressBar: $("progressBar"),
+      finalScore: $("finalScore"),
+      finalCorrect: $("finalCorrect"),
+      finalSolved: $("finalSolved"),
+      finalAccuracy: $("finalAccuracy"),
+      finalStreak: $("finalStreak"),
+      resultTitle: $("resultTitle"),
+      rankingList: $("rankingList"),
+      previewRankingList: $("previewRankingList"),
+      scoreRing: $("scoreRing"),
+      restartBtn: $("restartBtn")
+    };
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function setScreen(screenName) {
+      [els.welcomeScreen, els.gameScreen, els.resultScreen].forEach(el => el.classList.remove("active"));
+      els[screenName].classList.add("active");
+    }
+
+    function updateHud() {
+      els.timeText.textContent = `${state.timeLeft}s`;
+      els.scoreText.textContent = state.score;
+      els.progressText.textContent = `${Math.min(state.questionIndex + 1, state.questions.length)} / ${state.questions.length}`;
+      els.streakText.textContent = state.streak;
+      const progress = state.questions.length ? ((state.questionIndex) / state.questions.length) * 100 : 0;
+      els.progressBar.style.width = `${progress}%`;
+    }
+
+    function renderOptions(container, options, selectedValue, type) {
+      container.innerHTML = "";
+      options.forEach(option => {
+        const btn = document.createElement("button");
+        btn.className = "option" + (selectedValue === option ? " selected" : "");
+        btn.textContent = option;
+        btn.disabled = state.locked;
+        btn.addEventListener("click", () => {
+          if (state.locked) return;
+          if (type === "attack") state.selectedAttack = option;
+          if (type === "defense") state.selectedDefense = option;
+          renderCurrentQuestion();
+          playTone(620, 0.03, 0.015);
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderCurrentQuestion() {
+      const q = state.questions[state.questionIndex];
+      if (!q) return endGame();
+      els.questionTag.textContent = `${q.title} · ${state.questionIndex + 1}번`;
+      els.questionText.textContent = q.text;
+      renderOptions(els.attackOptions, ATTACK_OPTIONS, state.selectedAttack, "attack");
+      renderOptions(els.defenseOptions, DEFENSE_OPTIONS, state.selectedDefense, "defense");
+      els.feedbackBox.className = "feedback";
+      els.feedbackBox.textContent = "";
+      updateHud();
+    }
+
+    function nextQuestion() {
+      state.questionIndex += 1;
+      state.selectedAttack = null;
+      state.selectedDefense = null;
+      state.locked = false;
+      if (state.questionIndex >= state.questions.length) {
+        endGame();
+      } else {
+        renderCurrentQuestion();
+      }
+    }
+
+    function submitAnswer() {
+      if (state.locked) return;
+      if (!state.selectedAttack || !state.selectedDefense) {
+        showFeedback("공격 유형과 방어 방법을 모두 선택해 주세요.", false);
+        playTone(200, 0.08, 0.02);
+        return;
+      }
+
+      const q = state.questions[state.questionIndex];
+      state.locked = true;
+      state.solvedCount += 1;
+
+      const attackCorrect = state.selectedAttack === q.attack;
+      const defenseCorrect = state.selectedDefense === q.defense;
+      const bothCorrect = attackCorrect && defenseCorrect;
+
+      const timeBonus = Math.max(0, Math.floor(state.timeLeft * 0.2));
+      let gained = 0;
+      if (bothCorrect) {
+        gained = 20 + timeBonus;
+        state.correctCount += 1;
+        state.streak += 1;
+        state.bestStreak = Math.max(state.bestStreak, state.streak);
+      } else if (attackCorrect || defenseCorrect) {
+        gained = 8;
+        state.streak = 0;
+      } else {
+        gained = 0;
+        state.streak = 0;
+      }
+      state.score += gained;
+
+      markOptions(els.attackOptions, q.attack, state.selectedAttack);
+      markOptions(els.defenseOptions, q.defense, state.selectedDefense);
+
+      const msg = bothCorrect
+        ? `정답입니다! +${gained}점\n${q.explanation}`
+        : `부분 정답 또는 오답입니다. +${gained}점\n정답 공격: ${q.attack} / 정답 방어: ${q.defense}\n${q.explanation}`;
+
+      showFeedback(msg, bothCorrect);
+      updateHud();
+      playTone(bothCorrect ? 740 : 280, 0.12, 0.03);
+
+      setTimeout(nextQuestion, 1800);
+    }
+
+    function skipQuestion() {
+      if (state.locked) return;
+      state.streak = 0;
+      playTone(180, 0.08, 0.02);
+      nextQuestion();
+    }
+
+    function markOptions(container, correctValue, selectedValue) {
+      [...container.children].forEach(btn => {
+        const value = btn.textContent;
+        btn.disabled = true;
+        if (value === correctValue) btn.classList.add("correct");
+        if (value === selectedValue && value !== correctValue) btn.classList.add("wrong");
+      });
+    }
+
+    function showFeedback(text, isGood) {
+      els.feedbackBox.textContent = text;
+      els.feedbackBox.className = `feedback show ${isGood ? "good" : "bad"}`;
+    }
+
+    function startTimer() {
+      clearInterval(state.timerId);
+      state.timerId = setInterval(() => {
+        state.timeLeft -= 1;
+        updateHud();
+        if (state.timeLeft <= 5 && state.timeLeft > 0) playTone(420, 0.03, 0.01);
+        if (state.timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function startGame() {
+      state.playerName = els.playerName.value.trim() || "플레이어";
+      state.difficulty = els.difficulty.value;
+      state.sound = els.soundToggle.value === "on";
+      const config = difficultyConfig[state.difficulty];
+      state.timeLeft = config.time;
+      state.score = 0;
+      state.questionIndex = 0;
+      state.correctCount = 0;
+      state.solvedCount = 0;
+      state.streak = 0;
+      state.bestStreak = 0;
+      state.selectedAttack = null;
+      state.selectedDefense = null;
+      state.locked = false;
+      state.startedAt = Date.now();
+      state.questions = shuffle(QUESTION_BANK).slice(0, config.count);
+      setScreen("gameScreen");
+      renderCurrentQuestion();
+      updateHud();
+      startTimer();
+      playTone(520, 0.08, 0.03);
+    }
+
+    function endGame() {
+      clearInterval(state.timerId);
+      const accuracy = state.solvedCount ? Math.round((state.correctCount / state.solvedCount) * 100) : 0;
+      const elapsed = state.startedAt ? Math.round((Date.now() - state.startedAt) / 1000) : 0;
+
+      saveRanking({
+        name: state.playerName,
+        score: state.score,
+        correct: state.correctCount,
+        solved: state.solvedCount,
+        accuracy,
+        bestStreak: state.bestStreak,
+        difficulty: state.difficulty,
+        elapsed,
+        date: new Date().toLocaleString("ko-KR")
+      });
+
+      els.resultTitle.textContent = `${state.playerName}님의 도전 결과`;
+      els.finalScore.textContent = state.score;
+      els.finalCorrect.textContent = state.correctCount;
+      els.finalSolved.textContent = state.solvedCount;
+      els.finalAccuracy.textContent = `${accuracy}%`;
+      els.finalStreak.textContent = state.bestStreak;
+
+      const percent = Math.min(100, Math.max(5, state.score));
+      els.scoreRing.style.background = `conic-gradient(var(--neon) ${percent * 3.6}deg, rgba(255,255,255,0.08) 0deg)`;
+
+      renderRanking();
+      setScreen("resultScreen");
+      playTone(660, 0.12, 0.04);
+    }
+
+    function getRanking() {
+      return JSON.parse(localStorage.getItem("securityGameRanking") || "[]");
+    }
+
+    function saveRanking(record) {
+      const ranking = getRanking();
+      ranking.push(record);
+      ranking.sort((a, b) => b.score - a.score || b.correct - a.correct || a.elapsed - b.elapsed);
+      localStorage.setItem("securityGameRanking", JSON.stringify(ranking.slice(0, 10)));
+    }
+
+    function renderRanking() {
+      const ranking = getRanking();
+      const html = ranking.length
+        ? ranking.map((item, index) => `
+          <div class="ranking-item">
+            <div class="rank-badge">${index + 1}</div>
+            <div>
+              <div><strong>${escapeHtml(item.name)}</strong> <span class="mini">· ${difficultyLabel(item.difficulty)} · ${item.date}</span></div>
+              <div class="mini">정답 ${item.correct}개 / 해결 ${item.solved}문제 / 정확도 ${item.accuracy}% / 최고 연속 ${item.bestStreak}</div>
+            </div>
+            <div><strong>${item.score}점</strong></div>
+          </div>`).join("")
+        : '<div class="mini">아직 저장된 기록이 없습니다.</div>';
+      els.rankingList.innerHTML = html;
+      els.previewRankingList.innerHTML = html;
+    }
+
+    function difficultyLabel(value) {
+      return value === "easy" ? "쉬움" : value === "hard" ? "어려움" : "보통";
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function resetRanking() {
+      if (!confirm("저장된 랭킹 기록을 모두 지울까요?")) return;
+      localStorage.removeItem("securityGameRanking");
+      renderRanking();
+    }
+
+    function playTone(freq = 440, duration = 0.08, gainValue = 0.02) {
+      if (!state.sound) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!window.__securityAudioCtx) window.__securityAudioCtx = new AudioCtx();
+      const ctx = window.__securityAudioCtx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.value = gainValue;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(gainValue, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.start(now);
+      osc.stop(now + duration);
+    }
+
+    els.startBtn.addEventListener("click", startGame);
+    els.submitBtn.addEventListener("click", submitAnswer);
+    els.skipBtn.addEventListener("click", skipQuestion);
+    els.restartBtn.addEventListener("click", () => {
+      setScreen("welcomeScreen");
+      updateHud();
+      renderRanking();
+    });
+    els.resetRankBtn.addEventListener("click", resetRanking);
+
+    renderRanking();
+    updateHud();
+  </script>
+</body>
+</html>
